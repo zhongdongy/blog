@@ -36,7 +36,7 @@ In this notebook, we'll walk through how to leverage 🤗 `datasets` to download
 
 ---
 
-To get started, lets first install both of those packages.
+Before we do anything else, lets install both of those packages.
 
 ```
 ! pip install transformers datasets
@@ -44,9 +44,9 @@ To get started, lets first install both of those packages.
 
 ## Load a Dataset
 
-Let's start by loading a small image classification dataset and taking a look at its structure.
+We'll start by loading a small image classification dataset and taking a look at its structure.
 
-We'll use the 'beans' dataset, which contains images of both healthy and unhealthy bean leaves (and their associated labels). 🍃
+For the sake of this tutorial, we'll use [beans](https://huggingface.co/datasets/beans) - a small dataset containing images of both healthy and unhealthy bean leaves (and their associated labels). 🍃
 
 ```python
 from datasets import load_dataset
@@ -92,7 +92,7 @@ ex
 
 As we can see, image_file_path is a path within a cache directory that was created when we downloaded the source dataset.
 
-👀 Lets take that path and open the file as a `PIL` image so we can take a look at it. 
+Lets take that path and open the file as a `PIL` image so we can take a look at it. 👀
 
 ```python
 from PIL import Image
@@ -113,7 +113,7 @@ image
 
 Thats definitely a leaf! But what kind? 😅
 
-Since the `'labels'` feature of this dataset is a `datasets.features.ClassLabel`, we can use it to lookup the corresponding name for this example's label ID.
+Since the `'labels'` feature of this dataset is a [`datasets.features.ClassLabel`](https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.ClassLabel), we can use it to lookup the corresponding name for this example's label ID.
 
 First, lets access the feature definition for the `'labels'`
 
@@ -128,7 +128,7 @@ labels
 ClassLabel(num_classes=3, names=['angular_leaf_spot', 'bean_rust', 'healthy'], names_file=None, id=None)
 ```
 
-Now, lets print out the class label for our example by using `ClassLabel.int2str`.
+Now, lets print out the class label for our example by using [`ClassLabel.int2str`](https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.ClassLabel.int2str).
 
 ```python
 labels.int2str(ex['labels'])
@@ -142,7 +142,7 @@ labels.int2str(ex['labels'])
 
 Turns out the leaf shown above is infected with Angular Leaf Spot, a serious disease in bean plants. 😢
 
-Let's write a function that'll display a grid of examples from each class so we can get a better idea of what we're working with.
+To get to know this dataset a little better, we can write a function that'll display a grid of examples from each class so we can get a better idea of what we're working with.
 
 ```python
 from PIL import ImageDraw, ImageFont
@@ -157,8 +157,11 @@ def show_examples(ds, seed: int = 1234, examples_per_class: int = 3, size=(350, 
 
     for label_id, label in enumerate(labels):
 
-        # Filter the dataset by a single label, shuffle it, and grab a few samples
-        ds_slice = ds['train'].filter(lambda ex: ex['labels'] == label_id).shuffle(seed).select(range(examples_per_class))
+        # Filter by label, shuffle, and grab a few samples
+        ds_slice = ds['train'] \
+            .filter(lambda ex: ex['labels'] == label_id) \
+            .shuffle(seed) \
+            .select(range(examples_per_class))
 
         # Plot this label's examples along a row
         for i, example in enumerate(ds_slice):
@@ -177,19 +180,23 @@ show_examples(ds, seed=random.randint(0, 1337), examples_per_class=3)
 
 ![bean_image_grid.png](/blog/assets/25_vit/bean_image_grid.png)
 
-From what I'm seeing:
+You can run the above code a few times to see other random examples from the dataset.
+
+We can see that:
 
 - Angular Leaf Spot: Has irregular brown patches
 - Bean Rust: Has circular brown spots surrounded with a white-ish yellow ring
-- Healthy: ...looks healthy
+- Healthy: ...looks healthy 😅
 
 ## Loading ViT Feature Extractor
 
 Now that we know what our images look like and have a better understanding of the problem we're trying to solve, let's see how we can prepare these images for our model.
 
-When ViT models are trained, specific transformations are applied to images being fed into them. ⚠️ Use the wrong transformations on your image and the model won't be able to understand what it's seeing!
+When ViT models are trained, specific transformations are applied to images being fed into them. 
 
-To make sure we apply the correct transformations, we will use a `ViTFeatureExtractor` initialized with a configuration that was saved along with the pretrained model we plan to use. In our case, we'll be using the `google/vit-base-patch16-224-in21k` model, so lets load its feature extractor from the 🤗 Hub.
+⚠️ If you use the wrong transformations, the model won't be able to understand what it's seeing! ⚠️
+
+To make sure we apply the correct transformations, we'll use a `ViTFeatureExtractor` initialized from a configuration that was saved alongside the pretrained model we plan to fine-tune. In our case, we'll be using the [`google/vit-base-patch16-224-in21k`](https://huggingface.co/google/vit-base-patch16-224-in21k) model, so lets load its corresponding feature extractor from the 🤗 Hub.
 
 ```python
 from transformers import ViTFeatureExtractor
@@ -319,9 +326,9 @@ process_example(ds['train'][0])
  'return_tensors': 'pt'}
  ```
 
- While we could call `ds.map` and apply this to every example at once, this can be very slow. Instead, we'll apply a ***transform*** to the dataset. Transforms are only applied to examples as you index them.
+ While we could call [`ds.map`](https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.map) and apply this to every example at once, this can be very slow. Instead, we'll apply a ***transform*** to the dataset. Transforms are only applied to examples as you index them.
 
-First, though, we'll need to update our last function to accept a batch of data, as that's what `ds.with_transform` expects.
+First, though, we'll need to update our last function to accept a ***batch*** of data, as that's what [`ds.with_transform`](https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.map) expects.
 
 ```python
 def transform(example_batch):
@@ -422,7 +429,7 @@ When we finish fine-tuning the model, we'll evaluate it on the `validation` data
 
 ### Define our data collator
 
-Batches are coming in as lists of dicts, so we just unpack + stack those into batch tensors.
+Batches are coming in as lists of dicts, so we just unpack and stack those into batch tensors.
 
 We return a batch `dict` from our `collate_fn` so we can simply `**unpack` the inputs to our model later. ✨
 
@@ -438,7 +445,7 @@ def collate_fn(batch):
 
 ### Define an evaluation metric
 
-Here, we load the accuracy metric from `datasets`, and then write a function that takes in a model prediction and computes the accuracy.
+Here, we load the accuracy metric from `datasets`. Then, we write a function that takes in a model prediction and computes the accuracy.
 
 ```python
 import numpy as np
@@ -449,7 +456,7 @@ def compute_metrics(p):
     return metric.compute(predictions=np.argmax(p.predictions, axis=1), references=p.label_ids)
 ```
 
-✅ Now we can finally load our pretrained model!
+Now we can finally load our pretrained model!
 
  - We'll add `num_labels` when initializing it to make sure the model creates a classification head with the right number of output units.
  - We'll also include the `id2label` and `label2id` mappings so we have human readable labels when we share the model on 🤗 hub later.
