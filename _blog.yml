@@ -172,3 +172,8 @@
 - local: collaborative-training
   title: "Deep Learning over the Internet: Training Language Models Collaboratively"
   date: July 15, 2021
+
+- local: fine-tuning-vit
+  title: "Fine-Tune ViT for Image Classification with 🤗 Transformers"
+  date: August 26, 2021
+  author: nateraw
