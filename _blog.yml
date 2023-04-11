@@ -1913,6 +1913,7 @@
   date: March 9, 2023
   tags:
     - rl
+    - rlhf
     - nlp
 
 - local: informer
@@ -1990,3 +1991,13 @@
   date: Mar 30, 2023
   tags:
     - ethics
+
+- local: stackllama
+  title: "StackLLaMA: A hands-on guide to train LLaMA with RLHF"
+  author: edbeeching
+  thumbnail: /blog/assets/138_stackllama/thumbnail.png
+  date: April 5, 2023
+  tags:
+    - rl
+    - rlhf
+    - nlp
