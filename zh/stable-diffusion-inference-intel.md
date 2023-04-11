@@ -1,6 +1,6 @@
 ---
 title: "在英特尔 CPU 上加速 Stable Diffusion 推理"
-thumbnail: /blog/assets/136_stable_diffusion_inference_intel/01.png
+thumbnail: /blog/zh/assets/136_stable_diffusion_inference_intel/01.png
 authors:
 - user: juliensimon
 - user: echarlaix
@@ -13,7 +13,7 @@ translators:
 <!-- {blog_metadata} -->
 <!-- {authors} -->
 
-前一段时间，我们向大家介绍了最新一代的 [英特尔至强](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html) CPU（代号 Sapphire Rapids），包括其用于加速深度学习的新硬件特性，以及如何使用它们来加速自然语言 transformer 模型的[分布式微调](https://huggingface.co/blog/intel-sapphire-rapids)和[推理](https://huggingface.co/blog/intel-sapphire-rapids-inference)。
+前一段时间，我们向大家介绍了最新一代的 [英特尔至强](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html) CPU（代号 Sapphire Rapids），包括其用于加速深度学习的新硬件特性，以及如何使用它们来加速自然语言 transformer 模型的[分布式微调](https://huggingface.co/blog/zh/intel-sapphire-rapids)和[推理](https://huggingface.co/blog/zh/intel-sapphire-rapids-inference)。
 
 本文将向你展示在 Sapphire Rapids CPU 上加速 Stable Diffusion 模型推理的各种技术。后续我们还计划发布对 Stable Diffusion 进行分布式微调的文章。
 
